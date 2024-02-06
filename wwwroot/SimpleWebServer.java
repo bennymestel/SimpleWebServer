@@ -4,13 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.Properties; 
+import java.util.Properties;
+import java.nio.charset.StandardCharsets;
 
 public class SimpleWebServer {
     private static int PORT;
     private static int MAX_THREADS;
     private static String ROOT_DIRECTORY;
     private static String DEFAULT_PAGE;
+
     public static void main(String[] args) {
         loadConfig();
 
@@ -28,6 +30,7 @@ public class SimpleWebServer {
             System.err.println("Error starting the server: " + e.getMessage());
         }
     }
+
     private static void loadConfig() {
         try (InputStream input = new FileInputStream("config.ini")) {
             Properties prop = new Properties();
@@ -143,19 +146,96 @@ public class SimpleWebServer {
         
             return null;
         }
-        
 
         private String processHttpRequest(HttpRequest httpRequest) {
-            // Implement logic to handle different HTTP methods, generate responses, etc.
-            // Return the HTTP response as a string
             if (httpRequest != null) {
+                
+                if (!httpRequest.getMethod().equals("GET") && !httpRequest.getMethod().equals("POST")) {
+                    // Unsupported method, return a 501 response
+                    return "HTTP/1.1 501 Not Implemented\r\nContent-Type: text/html\r\n\r\n501 Not Implemented";
+                }
+
+                if (httpRequest.getMethod().equals("POST") && httpRequest.getRequestedPage().equals("/submit")) {
+                    // Process the form data from the POST request
+                    Map<String, String> formData = httpRequest.getParameters();
+                
+                    // Iterate through the form data and print each field
+                    for (Map.Entry<String, String> entry : formData.entrySet()) {
+                        String fieldName = entry.getKey();
+                        String fieldValue = entry.getValue();
+                
+                        // Do something with the form data (e.g., print to console)
+                        System.out.println(fieldName + ": " + fieldValue);
+                    }
+                
+                    // Send a response back to the client
+                    return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nForm submitted successfully!";
+                }                
+
                 System.out.println("Received HTTP request: " + httpRequest);
-                // You need to implement the logic here based on the parsed request
-                // and return an appropriate HTTP response
-                return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nHello, World!";
+
+                String requestedFile = ROOT_DIRECTORY + httpRequest.getRequestedPage();
+
+                // Check if the requested path is a directory
+                if (requestedFile.endsWith("/") || requestedFile.endsWith("\\")) {
+                    // If it's a directory, append the default page
+                    requestedFile += DEFAULT_PAGE;
+                }
+
+                // Check if the requested file exists
+                File file = new File(requestedFile);
+
+                if (file.exists() && !file.isDirectory()) {
+                    // Serve the file
+                    return serveFile(file);
+                } else {
+                    // File not found, return a 404 response
+                    return "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n404 Not Found";
+                }
             }
 
+            // Bad Request response
             return "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n\r\nBad Request";
+        }
+
+        private String serveFile(File file) {
+            try {
+                FileInputStream fis = new FileInputStream(file);
+                byte[] data = new byte[(int) file.length()];
+                fis.read(data);
+                fis.close();
+
+                String contentType = getContentType(file);
+
+                // Build the HTTP response with file content
+                StringBuilder response = new StringBuilder();
+                response.append("HTTP/1.1 200 OK\r\n");
+                response.append("Content-Type: ").append(contentType).append("\r\n");
+                response.append("Content-Length: ").append(file.length()).append("\r\n");
+                response.append("\r\n");
+
+                return response.toString() + new String(data, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\n\r\nInternal Server Error";
+            }
+        }
+
+        private String getContentType(File file) {
+            // Add more content types as needed
+            if (file.getName().endsWith(".html") || file.getName().endsWith(".htm")) {
+                return "text/html";
+            } else if (file.getName().endsWith(".jpg") || file.getName().endsWith(".jpeg")) {
+                return "image/jpeg";
+            } else if (file.getName().endsWith(".png")) {
+                return "image/png";
+            } else if (file.getName().endsWith(".gif")) {
+                return "image/gif";
+            } else if (file.getName().endsWith(".txt")) {
+                return "text/plain";
+            } else {
+                return "application/octet-stream";
+            }
         }
     }
 
@@ -219,5 +299,4 @@ public class SimpleWebServer {
                     '}';
         }
     }
-
 }
