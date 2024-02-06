@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    h1 {
+      color: blue;
+      margin: 0;
+      text-align: center;
+    }
+
+    h2 {
+      color: red;
+      text-align: center;
+    }
+
+    hr {
+      margin: 5px 0;
+    }
+
+    img {
+      display: inline-block;
+      margin: 0 10px;
+      width: 200px;
+      height: auto;
+    }
+
+    a {
+      display: block;
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    form {
+      text-align: center;
+    }
+
+    label,
+    input,
+    textarea {
+      margin-bottom: 10px;
+    }
+
+    label {
+      vertical-align: top;
+    }
+  </style>
+</head>
+<body>
+  <h1><marquee>Computer Networks 2023: Lab 1</marquee></h1>
+  <h2>Benny Mestel and Dor Medina</h2>
+  <hr>
+
+  <img src="surfer.jpg" alt="Surfer">
+  <img src="karate.png" alt="Karate">
+
+  <a href="https://moodle.runi.ac.il/2024/course/view.php?id=2401572">Course Website</a>
+  <a href="https://www.ice.co.il/">My Favorite Website</a>
+
+  <hr>
+
+  <form>
+    <label for="sender">Sender:</label>
+    <input type="text" id="sender" name="sender"><br>
+    <label for="receiver">Receiver:</label>
+    <input type="text" id="receiver" name="receiver"><br>
+    <label for="subject">Subject:</label>
+    <input type="text" id="subject" name="subject"><br>
+    <label for="message">Message:</label>
+    <textarea id="message" name="message" rows="4" cols="50"></textarea><br>
+    <input type="button" value="Send" onclick="showNotification()">
+    <form method="POST" action="/submit">
+      <!-- Your form fields here -->
+      <input type="submit" value="Send" onclick="submitForm()">
+    <script>
+      function submitForm() {
+          // Collect form data and send a POST request to the server
+          // You can use JavaScript Fetch API or other methods for this
+          // For simplicity, you can use the Fetch API as shown below
+          fetch('/submit', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: new URLSearchParams(new FormData(document.querySelector('form'))),
+          })
+          .then(response => response.text())
+          .then(data => alert(data));
+      }
+    </script>  
+  </form>
+  <script>
+    function showNotification() {
+      alert("Sent!");
+    }
+  </script>
+</body>
+</html>
